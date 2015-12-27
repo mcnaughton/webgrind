@@ -78,26 +78,34 @@ class Webgrind_Preprocessor
                 // Cost line
                 fscanf($in,"%d %d",$lnr,$cost);
 
+		$defaultArray = array(
+		    'filename'              => self::getCompressedName(substr(trim($line),3), true),
+		    'line'                  => $lnr,
+		    'invocationCount'       => 1,
+		    'summedSelfCost'        => $cost,
+		    'summedInclusiveCost'   => $cost,
+		    'calledFromInformation' => array(),
+		    'subCallInformation'    => array()
+                );
+
                 if (!isset($functionNames[$function])) {
                     $index = $nextFuncNr++;
                     $functionNames[$function] = $index;
+                    if (!isset($functions[$index])) {
+                        $functions[$index] = $defaultArray;
+                    }
                     if (isset($proxyFunctions[$function])) {
                         $proxyQueue[$index] = array();
                     }
-                    $functions[$index] = array(
-                        'filename'              => self::getCompressedName(substr(trim($line),3), true),
-                        'line'                  => $lnr,
-                        'invocationCount'       => 1,
-                        'summedSelfCost'        => $cost,
-                        'summedInclusiveCost'   => $cost,
-                        'calledFromInformation' => array(),
-                        'subCallInformation'    => array()
-                    );
                 } else {
                     $index = $functionNames[$function];
-                    $functions[$index]['invocationCount']++;
-                    $functions[$index]['summedSelfCost'] += $cost;
-                    $functions[$index]['summedInclusiveCost'] += $cost;
+                    if (!isset($functions[$index])) {
+                        $functions[$index] = $defaultArray;
+                    } else {
+                        $functions[$index]['invocationCount']++;
+                        $functions[$index]['summedSelfCost'] += $cost;
+                        $functions[$index]['summedInclusiveCost'] += $cost;
+                    }
                 }
             } else if (substr($line,0,4)==='cfn=') {
                 // Found call to function. ($function/$index should contain function call originates from)
